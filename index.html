@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dice Tray — Free RPG Dice Roller for D&D, Fate, Savage Worlds & More</title>
+<meta name="description" content="Free online dice roller with real system rules built in: D&D 5e advantage, Fate ladder, Savage Worlds exploding dice, World of Darkness pools, Shadowrun glitches and Call of Cthulhu bonus dice. Type any notation like 4d6kh3+2. No sign-up.">
+<link rel="canonical" href="https://eltacolibre.github.io/dice-tray/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Dice Tray — Free RPG Dice Roller with Real System Rules">
+<meta property="og:description" content="Roll for D&D 5e, Fate, Savage Worlds, World of Darkness, Shadowrun and Call of Cthulhu — with each system's actual rules, not just numbers.">
+<meta property="og:url" content="https://eltacolibre.github.io/dice-tray/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🎲</text></svg>">
+<style>
+  :root {
+    --wood: #221510;
+    --wood-light: #33211729;
+    --panel: #2c1c13;
+    --panel-edge: #4a3220;
+    --felt: #451f26;
+    --felt-deep: #35171d;
+    --felt-edge: #5c2c35;
+    --ivory: #f2ead8;
+    --parchment: #d9cbae;
+    --muted: #a08d6c;
+    --brass: #c9a45c;
+    --brass-bright: #e8c882;
+    --crit: #8fc97a;
+    --fumble: #d96a5f;
+    --ink: #221510;
+    --shadow: rgba(0,0,0,.45);
+    --font-display: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --font-body: "Segoe UI", system-ui, -apple-system, sans-serif;
+    --font-mono: Consolas, "Cascadia Mono", monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--wood);
+    background-image:
+      repeating-linear-gradient(90deg, transparent 0 140px, rgba(0,0,0,.14) 140px 142px),
+      linear-gradient(180deg, #2a1a11 0%, #221510 40%, #1c110c 100%);
+    color: var(--parchment);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    padding: 20px clamp(10px, 3vw, 36px) 60px;
+  }
+
+  header {
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+    margin: 4px auto 18px; max-width: 1200px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-variant: small-caps;
+    letter-spacing: .12em;
+    font-size: clamp(26px, 4vw, 36px);
+    color: var(--brass);
+    font-weight: 600;
+    text-shadow: 0 2px 6px var(--shadow);
+  }
+  header .sub { color: var(--muted); font-size: 13px; letter-spacing: .04em; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(300px, 380px) 1fr;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+  /* ---------- panels ---------- */
+  .panel {
+    background: linear-gradient(180deg, #31201480, #26170e80), var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 10px;
+    box-shadow: 0 4px 14px var(--shadow), inset 0 1px 0 #ffffff12;
+    padding: 16px;
+  }
+  .panel + .panel { margin-top: 20px; }
+  .panel h2 {
+    font-family: var(--font-display);
+    font-variant: small-caps;
+    letter-spacing: .1em;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--brass);
+    border-bottom: 1px solid var(--panel-edge);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* ---------- quick dice ---------- */
+  .dice-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .die-btn {
+    aspect-ratio: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: none; border: none; cursor: pointer;
+    color: var(--ink);
+    position: relative;
+    transition: transform .12s ease;
+  }
+  .die-btn:hover { transform: translateY(-3px) rotate(-4deg); }
+  .die-btn:active { transform: translateY(0) scale(.94); }
+  .die-btn:focus-visible { outline: 2px solid var(--brass-bright); outline-offset: 3px; border-radius: 8px; }
+  .die-btn .shape {
+    width: 62px; height: 62px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(150deg, #fbf5e6, #d9cbae 70%, #c2b090);
+    filter: drop-shadow(0 3px 3px var(--shadow));
+    font-family: var(--font-display);
+    font-weight: 700; font-size: 17px;
+  }
+  .die-btn .count {
+    position: absolute; top: -4px; right: 2px;
+    background: var(--brass); color: var(--ink);
+    font-size: 11px; font-weight: 700;
+    min-width: 20px; height: 20px; border-radius: 10px;
+    display: none; align-items: center; justify-content: center;
+    padding: 0 5px;
+    box-shadow: 0 2px 4px var(--shadow);
+  }
+  .die-btn .count.on { display: flex; }
+
+  /* die silhouettes */
+  .shape.s4  { clip-path: polygon(50% 4%, 97% 92%, 3% 92%); padding-top: 22px; }
+  .shape.s6  { border-radius: 10px; }
+  .shape.s8  { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  .shape.s10 { clip-path: polygon(50% 0, 96% 40%, 78% 100%, 22% 100%, 4% 40%); }
+  .shape.s12 { clip-path: polygon(50% 0, 93% 31%, 82% 90%, 18% 90%, 7% 31%); }
+  .shape.s20 { clip-path: polygon(50% 0, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%); }
+  .shape.s100 { border-radius: 50%; }
+  .shape.sF { border-radius: 10px; }
+
+  .tray-controls { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
+  .mod-stepper { display: flex; align-items: center; gap: 4px; }
+  .mod-stepper button {
+    width: 30px; height: 30px; border-radius: 6px;
+    background: var(--wood-light); border: 1px solid var(--panel-edge);
+    color: var(--parchment); font-size: 16px; cursor: pointer;
+  }
+  .mod-stepper button:hover { border-color: var(--brass); color: var(--brass-bright); }
+  .mod-stepper .mod-val {
+    min-width: 44px; text-align: center;
+    font-family: var(--font-mono); font-size: 15px; color: var(--ivory);
+  }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    font-family: var(--font-display);
+    font-variant: small-caps; letter-spacing: .1em;
+    font-size: 15px; font-weight: 700;
+    padding: 8px 20px;
+    border-radius: 7px;
+    border: 1px solid #8a6b33;
+    background: linear-gradient(180deg, var(--brass-bright), var(--brass) 55%, #a37f3d);
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 3px 8px var(--shadow), inset 0 1px 0 #ffffff70;
+    transition: transform .1s ease, filter .1s ease;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid var(--ivory); outline-offset: 2px; }
+  .btn.ghost {
+    background: var(--wood-light);
+    color: var(--parchment);
+    border-color: var(--panel-edge);
+    box-shadow: none;
+    font-weight: 600;
+  }
+  .btn.ghost:hover { color: var(--brass-bright); border-color: var(--brass); }
+  .btn.small { font-size: 13px; padding: 5px 12px; }
+
+  /* ---------- notation ---------- */
+  .notation-row { display: flex; gap: 8px; }
+  input[type="text"], input[type="number"], select {
+    background: #1b100a;
+    border: 1px solid var(--panel-edge);
+    border-radius: 7px;
+    color: var(--ivory);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    padding: 8px 10px;
+  }
+  input:focus-visible, select:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+  #notation { flex: 1; min-width: 0; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 8px; line-height: 1.7; }
+  .hint code {
+    font-family: var(--font-mono); color: var(--parchment);
+    background: #1b100a; padding: 1px 5px; border-radius: 4px; cursor: pointer;
+  }
+  .hint code:hover { color: var(--brass-bright); }
+  .parse-error { color: var(--fumble); font-size: 12.5px; margin-top: 8px; display: none; }
+
+  /* ---------- footer / support ---------- */
+  footer {
+    max-width: 1200px; margin: 28px auto 0; padding: 18px 16px 8px;
+    border-top: 1px solid var(--panel-edge);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+    color: var(--muted); font-size: 13px; line-height: 1.6;
+  }
+  footer p { flex: 1; min-width: 240px; }
+  footer b { color: var(--brass); }
+  footer .links { display: flex; flex-wrap: wrap; gap: 10px; }
+  footer a.support-btn {
+    display: inline-block; text-decoration: none; white-space: nowrap;
+    padding: 8px 14px; border-radius: 8px;
+    border: 1px solid var(--panel-edge); background: var(--panel);
+    color: var(--parchment); box-shadow: 0 2px 8px var(--shadow);
+  }
+  footer a.support-btn:hover { border-color: var(--brass); color: var(--brass-bright); }
+  footer a.support-btn.primary {
+    background: linear-gradient(180deg, var(--brass-bright), var(--brass));
+    border-color: var(--brass); color: var(--ink); font-weight: 600;
+  }
+  footer a.support-btn.primary:hover { color: var(--ink); filter: brightness(1.08); }
+
+  /* ---------- system tabs ---------- */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tab {
+    background: var(--wood-light); border: 1px solid var(--panel-edge);
+    color: var(--muted); border-radius: 6px;
+    font-size: 12.5px; font-weight: 600; letter-spacing: .02em;
+    padding: 5px 10px; cursor: pointer;
+  }
+  .tab:hover { color: var(--parchment); }
+  .tab.active { background: var(--brass); color: var(--ink); border-color: #8a6b33; }
+  .sys-body { display: none; }
+  .sys-body.active { display: block; }
+  .sys-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .sys-row label { font-size: 13px; color: var(--muted); }
+  .sys-row input[type=number] { width: 64px; }
+  .seg { display: flex; border: 1px solid var(--panel-edge); border-radius: 7px; overflow: hidden; }
+  .seg button {
+    background: var(--wood-light); color: var(--muted); border: none;
+    padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .seg button + button { border-left: 1px solid var(--panel-edge); }
+  .seg button.active { background: var(--brass); color: var(--ink); }
+  .sys-note { font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 6px; }
+
+  /* ---------- the felt tray ---------- */
+  .tray {
+    background:
+      radial-gradient(ellipse at 50% 30%, #52252d 0%, var(--felt) 55%, var(--felt-deep) 100%);
+    border: 10px solid transparent;
+    border-image: linear-gradient(160deg, #5a3d22, #3a2513 40%, #4a3220 70%, #2c1a0e) 1;
+    border-radius: 4px;
+    box-shadow: inset 0 6px 24px rgba(0,0,0,.55), 0 6px 18px var(--shadow);
+    min-height: 380px;
+    padding: 24px 20px 20px;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .tray-empty {
+    margin: auto; text-align: center; color: #8d6068;
+    font-family: var(--font-display); font-style: italic; font-size: 16px;
+    letter-spacing: .04em;
+  }
+  .roll-label {
+    text-align: center; color: #c99ba4; font-size: 13px; letter-spacing: .08em;
+    font-family: var(--font-mono); margin-bottom: 14px; word-break: break-word;
+  }
+  .dice-field {
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-content: center;
+    flex: 1; padding: 6px 0 18px;
+  }
+
+  .rolled {
+    width: 64px; height: 64px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(150deg, #fbf5e6, #d9cbae 70%, #c2b090);
+    color: var(--ink);
+    font-family: var(--font-display); font-weight: 700; font-size: 22px;
+    filter: drop-shadow(0 4px 4px var(--shadow));
+    position: relative;
+    animation: tumble .5s cubic-bezier(.2, 1.6, .4, 1);
+  }
+  .rolled.s4 { padding-top: 20px; }
+  .rolled.dropped { opacity: .32; filter: grayscale(.7) drop-shadow(0 4px 4px var(--shadow)); }
+  .rolled.dropped::after {
+    content: ""; position: absolute; left: 18%; right: 18%; top: 50%;
+    border-top: 2.5px solid #74222a; transform: rotate(-18deg);
+  }
+  .rolled.max { background: linear-gradient(150deg, #d8f0c8, #8fc97a 70%, #6da35b); box-shadow: 0 0 18px #8fc97a66; }
+  .rolled.min1 { background: linear-gradient(150deg, #f0c8c2, #d96a5f 70%, #b04a40); color: #fff; }
+  .rolled .tag {
+    position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-body); font-size: 9.5px; font-weight: 700; letter-spacing: .05em;
+    background: #1b100a; color: var(--brass); border: 1px solid var(--panel-edge);
+    border-radius: 8px; padding: 1px 7px; white-space: nowrap;
+  }
+  .rolled.fate { font-size: 26px; }
+
+  @keyframes tumble {
+    0%   { transform: translateY(-90px) rotate(-160deg) scale(.6); opacity: 0; }
+    60%  { opacity: 1; }
+    100% { transform: translateY(0) rotate(0) scale(1); }
+  }
+  .rolled:nth-child(2n)  { animation-duration: .62s; }
+  .rolled:nth-child(3n)  { animation-duration: .74s; }
+  .rolled:nth-child(5n)  { animation-duration: .86s; }
+
+  .mod-chip {
+    align-self: center;
+    font-family: var(--font-mono); font-size: 20px; font-weight: 700;
+    color: var(--brass-bright);
+    padding: 0 4px;
+  }
+
+  .total-row {
+    border-top: 1px solid #5c2c3580;
+    padding-top: 14px;
+    display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap;
+  }
+  .total-num {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 54px; line-height: 1;
+    color: var(--ivory);
+    text-shadow: 0 2px 10px rgba(0,0,0,.6);
+  }
+  .total-word {
+    font-family: var(--font-display); font-variant: small-caps; letter-spacing: .14em;
+    font-size: 16px; color: var(--brass);
+  }
+  .verdict { font-size: 15px; font-weight: 700; letter-spacing: .03em; }
+  .verdict.good { color: var(--crit); }
+  .verdict.bad { color: var(--fumble); }
+  .verdict.plain { color: var(--parchment); font-weight: 600; }
+  .tray-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; }
+
+  /* ---------- history ---------- */
+  .history-list { list-style: none; max-height: 420px; overflow-y: auto; }
+  .history-list li {
+    border-bottom: 1px solid #3a2513;
+    padding: 9px 4px;
+    display: flex; gap: 10px; align-items: baseline;
+    font-size: 13.5px;
+  }
+  .history-list li:hover { background: #ffffff08; }
+  .h-time { color: #6e5c42; font-family: var(--font-mono); font-size: 11px; flex-shrink: 0; }
+  .h-desc { flex: 1; color: var(--parchment); line-height: 1.5; overflow-wrap: anywhere; }
+  .h-desc .h-notation { color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+  .h-total { font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--ivory); flex-shrink: 0; }
+  .h-total.good { color: var(--crit); }
+  .h-total.bad { color: var(--fumble); }
+  .h-reroll {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 15px; flex-shrink: 0; padding: 2px 4px; border-radius: 4px;
+  }
+  .h-reroll:hover { color: var(--brass-bright); }
+  .history-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--panel-edge); padding-bottom: 8px; margin-bottom: 4px; }
+  .history-head h2 { border: none; padding: 0; margin: 0; }
+
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #1b100a; }
+  ::-webkit-scrollbar-thumb { background: #4a3220; border-radius: 5px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rolled { animation: none; }
+    .die-btn, .btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Dice Tray</h1>
+  <span class="sub">multi-die roller &amp; system rules for the table</span>
+</header>
+
+<div class="layout">
+  <div class="controls-col">
+
+    <!-- QUICK DICE -->
+    <section class="panel" aria-label="Quick dice">
+      <h2>Pick Up Dice</h2>
+      <div class="dice-grid" id="diceGrid"></div>
+      <div class="tray-controls">
+        <div class="mod-stepper" aria-label="Modifier">
+          <button id="modMinus" title="Decrease modifier" aria-label="Decrease modifier">−</button>
+          <span class="mod-val" id="modVal">+0</span>
+          <button id="modPlus" title="Increase modifier" aria-label="Increase modifier">+</button>
+        </div>
+        <button class="btn" id="rollPool">Roll</button>
+        <button class="btn ghost small" id="clearPool">Clear</button>
+      </div>
+      <p class="hint">Click a die to add it to your hand, then Roll. Right-click a die to remove one.</p>
+    </section>
+
+    <!-- NOTATION -->
+    <section class="panel" aria-label="Dice notation">
+      <h2>Roll by Notation</h2>
+      <div class="notation-row">
+        <input type="text" id="notation" placeholder="2d6+3, 1d20+5, 4d6kh3…" autocomplete="off" spellcheck="false" aria-label="Dice notation">
+        <button class="btn" id="rollNotation">Roll</button>
+      </div>
+      <p class="parse-error" id="parseError"></p>
+      <p class="hint">
+        Click to try:
+        <code>2d6+3</code> <code>1d20+7</code> <code>2d20kh1+5</code> <code>2d20kl1+5</code>
+        <code>4d6dl1</code> <code>3d6!</code> <code>8d6r1</code> <code>1d%</code> <code>4dF+2</code><br>
+        <b>kh/kl N</b> keep highest/lowest · <b>dh/dl N</b> drop · <b>!</b> exploding · <b>r N</b> reroll ≤N once · <b>d%</b> percentile · <b>dF</b> Fate
+      </p>
+    </section>
+
+    <!-- SYSTEMS -->
+    <section class="panel" aria-label="Game systems">
+      <h2>System Rules</h2>
+      <div class="tabs" id="sysTabs" role="tablist"></div>
+
+      <div class="sys-body" data-sys="dnd">
+        <div class="sys-row">
+          <div class="seg" id="advSeg">
+            <button data-adv="dis">Disadv.</button>
+            <button data-adv="norm" class="active">Normal</button>
+            <button data-adv="adv">Advantage</button>
+          </div>
+        </div>
+        <div class="sys-row">
+          <label>Modifier</label><input type="number" id="dndMod" value="0" step="1">
+          <label>DC <span style="opacity:.6">(optional)</span></label><input type="number" id="dndDC" placeholder="—">
+        </div>
+        <div class="sys-row">
+          <button class="btn" id="dndRoll">Roll d20</button>
+          <button class="btn ghost" id="dndStats">Roll Stats (4d6 drop lowest ×6)</button>
+        </div>
+        <p class="sys-note">Nat 20 and Nat 1 are called out. With a DC set, you get a pass/fail verdict.</p>
+      </div>
+
+      <div class="sys-body" data-sys="fate">
+        <div class="sys-row">
+          <label>Skill bonus</label><input type="number" id="fateMod" value="0" step="1">
+          <button class="btn" id="fateRoll">Roll 4dF</button>
+        </div>
+        <p class="sys-note">Four Fate dice (+ / blank / −) plus your skill. Ladder result is named, from Legendary (+8) down to Abysmal (−2).</p>
+      </div>
+
+      <div class="sys-body" data-sys="savage">
+        <div class="sys-row">
+          <label>Trait die</label>
+          <select id="swTrait"><option>4</option><option selected>6</option><option>8</option><option>10</option><option>12</option></select>
+          <label>Modifier</label><input type="number" id="swMod" value="0" step="1">
+          <label><input type="checkbox" id="swWild" checked> Wild die (d6)</label>
+        </div>
+        <div class="sys-row"><button class="btn" id="swRoll">Roll Trait</button></div>
+        <p class="sys-note">Both dice ace (explode). Best result vs TN 4 — every 4 over is a raise. Two natural 1s is a critical failure.</p>
+      </div>
+
+      <div class="sys-body" data-sys="wod">
+        <div class="sys-row">
+          <label>Pool</label><input type="number" id="wodPool" value="5" min="1" max="30">
+          <label>Again</label>
+          <select id="wodAgain"><option value="10" selected>10-again</option><option value="9">9-again</option><option value="8">8-again</option><option value="0">none</option></select>
+        </div>
+        <div class="sys-row"><button class="btn" id="wodRoll">Roll d10 Pool</button></div>
+        <p class="sys-note">Chronicles of Darkness: d10s, 8+ is a success, "again" dice reroll and add. 5+ successes is exceptional; 0 successes on a chance die means dramatic failure.</p>
+      </div>
+
+      <div class="sys-body" data-sys="shadowrun">
+        <div class="sys-row">
+          <label>Pool</label><input type="number" id="srPool" value="10" min="1" max="40">
+          <label><input type="checkbox" id="srEdge"> Edge (6s explode)</label>
+        </div>
+        <div class="sys-row"><button class="btn" id="srRoll">Roll d6 Pool</button></div>
+        <p class="sys-note">5s and 6s are hits. Half or more 1s is a glitch — with zero hits, a critical glitch.</p>
+      </div>
+
+      <div class="sys-body" data-sys="coc">
+        <div class="sys-row">
+          <label>Skill</label><input type="number" id="cocSkill" value="50" min="1" max="99">
+          <div class="seg" id="cocSeg">
+            <button data-bp="-1">Penalty</button>
+            <button data-bp="0" class="active">Normal</button>
+            <button data-bp="1">Bonus</button>
+          </div>
+        </div>
+        <div class="sys-row"><button class="btn" id="cocRoll">Roll d100</button></div>
+        <p class="sys-note">Call of Cthulhu 7e: roll under skill. Extreme = fifth, Hard = half. Bonus/penalty dice swap the tens die. 96–100 fumbles at low skill.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="tray-col">
+    <!-- TRAY -->
+    <div class="tray" aria-live="polite" id="tray">
+      <div class="tray-empty" id="trayEmpty">The felt is empty.<br>Pick up some dice.</div>
+      <div class="roll-label" id="rollLabel" hidden></div>
+      <div class="dice-field" id="diceField"></div>
+      <div class="total-row" id="totalRow" hidden>
+        <span class="total-word">Total</span>
+        <span class="total-num" id="totalNum">0</span>
+        <span class="verdict" id="verdict"></span>
+      </div>
+      <div class="tray-actions">
+        <button class="btn ghost small" id="rollAgain" hidden>Roll again</button>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <section class="panel" style="margin-top:20px" aria-label="Roll history">
+      <div class="history-head">
+        <h2>Ledger</h2>
+        <button class="btn ghost small" id="clearHistory">Clear</button>
+      </div>
+      <ul class="history-list" id="historyList"></ul>
+    </section>
+  </div>
+</div>
+
+<footer>
+  <p><b>Dice Tray is free, has no ads, and never sees your rolls</b> — everything happens in your browser. Built by a GM who got tired of dice apps that don't know the rules. If it's earned a spot on your table, a coffee keeps it maintained.</p>
+  <div class="links">
+    <a class="support-btn primary" href="https://ko-fi.com/bagquest" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+    <a class="support-btn" href="https://bagquest.itch.io" target="_blank" rel="noopener">📕 GM toolkits</a>
+    <a class="support-btn" href="https://eltacolibre.github.io/mapforge/" target="_blank" rel="noopener">🗺️ Battle maps</a>
+  </div>
+</footer>
+
+<script>
+"use strict";
+/* ============================== RNG & core rolling ============================== */
+const rand = n => 1 + Math.floor(Math.random() * n);   // 1..n
+const randF = () => Math.floor(Math.random() * 3) - 1; // -1,0,1
+
+const EXPLODE_CAP = 200;
+
+/* ============================== Notation parser ==============================
+   Supports terms joined by + / - :
+   NdX  with X = number, % (100), F (fate)
+   suffixes: khN klN dhN dlN  !  rN
+   plain integers as modifiers
+*/
+function parseNotation(input) {
+  const src = input.replace(/\s+/g, "").toLowerCase();
+  if (!src) throw new Error("Type something to roll, e.g. 2d6+3");
+  if (!/^[-+]?[0-9d%f!khlr]+([-+][0-9d%f!khlr]+)*$/.test(src)) {
+    throw new Error("Unrecognized characters — use forms like 2d6+3 or 4d6kh3");
+  }
+  const parts = src.match(/[-+]?[^-+]+/g);
+  const terms = [];
+  for (const raw of parts) {
+    const sign = raw[0] === "-" ? -1 : 1;
+    const body = raw.replace(/^[-+]/, "");
+    if (/^\d+$/.test(body)) { terms.push({ kind: "mod", sign, value: parseInt(body, 10) }); continue; }
+    const m = body.match(/^(\d*)d(\d+|%|f)((?:kh\d+|kl\d+|dh\d+|dl\d+|r\d+|!)*)$/);
+    if (!m) throw new Error(`Can't read "${body}" — try NdX with kh/kl/dh/dl/r/!`);
+    const count = m[1] ? parseInt(m[1], 10) : 1;
+    const sides = m[2] === "%" ? 100 : m[2] === "f" ? "F" : parseInt(m[2], 10);
+    if (count < 1 || count > 100) throw new Error("Dice count must be 1–100");
+    if (sides !== "F" && (sides < 2 || sides > 1000)) throw new Error("Die size must be 2–1000");
+    const term = { kind: "dice", sign, count, sides, explode: false, reroll: 0, keep: null };
+    let sfx = m[3] || "";
+    for (const op of sfx.match(/kh\d+|kl\d+|dh\d+|dl\d+|r\d+|!/g) || []) {
+      if (op === "!") term.explode = true;
+      else if (op[0] === "r") term.reroll = parseInt(op.slice(1), 10);
+      else term.keep = { mode: op.slice(0, 2), n: parseInt(op.slice(2), 10) };
+    }
+    if (term.sides === "F" && (term.explode || term.reroll)) throw new Error("Fate dice can't explode or reroll");
+    if (term.keep && term.keep.n >= term.count && (term.keep.mode === "dh" || term.keep.mode === "dl"))
+      throw new Error("Can't drop that many dice");
+    terms.push(term);
+  }
+  if (!terms.some(t => t.kind === "dice")) throw new Error("No dice in that expression");
+  return terms;
+}
+
+function rollTerm(term) {
+  const rolls = [];
+  for (let i = 0; i < term.count; i++) {
+    if (term.sides === "F") { rolls.push({ value: randF(), kept: true, sides: "F" }); continue; }
+    let v = rand(term.sides);
+    if (term.reroll && v <= term.reroll) {
+      rolls.push({ value: v, kept: false, sides: term.sides, note: "reroll" });
+      v = rand(term.sides);
+    }
+    rolls.push({ value: v, kept: true, sides: term.sides });
+    if (term.explode) {
+      let guard = 0;
+      while (v === term.sides && guard++ < EXPLODE_CAP) {
+        v = rand(term.sides);
+        rolls.push({ value: v, kept: true, sides: term.sides, note: "explode" });
+      }
+    }
+  }
+  if (term.keep) {
+    const live = rolls.filter(r => r.kept);
+    const sorted = [...live].sort((a, b) => b.value - a.value); // descending
+    let keepSet;
+    const { mode, n } = term.keep;
+    if (mode === "kh") keepSet = new Set(sorted.slice(0, n));
+    else if (mode === "kl") keepSet = new Set(sorted.slice(-n));
+    else if (mode === "dh") keepSet = new Set(sorted.slice(n));
+    else keepSet = new Set(sorted.slice(0, sorted.length - n)); // dl
+    for (const r of live) if (!keepSet.has(r)) { r.kept = false; r.note = "dropped"; }
+    // Sets hold object identity, but duplicates values are distinct objects — safe.
+  }
+  return rolls;
+}
+
+function evaluate(terms) {
+  let total = 0;
+  const detail = [];
+  for (const t of terms) {
+    if (t.kind === "mod") { total += t.sign * t.value; detail.push({ kind: "mod", value: t.sign * t.value }); continue; }
+    const rolls = rollTerm(t);
+    const sum = rolls.reduce((a, r) => a + (r.kept ? r.value : 0), 0);
+    total += t.sign * sum;
+    detail.push({ kind: "dice", term: t, rolls, sum });
+  }
+  return { total, detail };
+}
+
+/* ============================== Tray rendering ============================== */
+const $ = id => document.getElementById(id);
+const trayEmpty = $("trayEmpty"), rollLabel = $("rollLabel"), diceField = $("diceField"),
+      totalRow = $("totalRow"), totalNum = $("totalNum"), verdictEl = $("verdict"),
+      rollAgainBtn = $("rollAgain");
+
+const shapeClass = s =>
+  s === "F" ? "sF" : s === 4 ? "s4" : s === 6 ? "s6" : s === 8 ? "s8" :
+  s === 10 ? "s10" : s === 12 ? "s12" : s === 20 ? "s20" : "s100";
+
+function dieChip(roll, opts = {}) {
+  const el = document.createElement("div");
+  const s = roll.sides;
+  el.className = "rolled " + shapeClass(s);
+  if (s === "F") {
+    el.classList.add("fate");
+    el.textContent = roll.value > 0 ? "+" : roll.value < 0 ? "−" : "·";
+  } else {
+    el.textContent = roll.value;
+    if (!opts.noColor) {
+      if (roll.kept && roll.value === (s === 100 ? 100 : s)) el.classList.add("max");
+      if (roll.kept && roll.value === 1 && s >= 6) el.classList.add("min1");
+    }
+  }
+  if (!roll.kept) el.classList.add("dropped");
+  const tagText = opts.tag || (roll.note === "explode" ? "ace!" : roll.note === "reroll" ? "rerolled" : roll.note === "dropped" ? "" : "");
+  if (tagText) {
+    const t = document.createElement("span");
+    t.className = "tag"; t.textContent = tagText;
+    el.appendChild(t);
+  }
+  return el;
+}
+
+function showTray({ label, chips, total, totalWord = "Total", verdict = null, showTotal = true }) {
+  trayEmpty.style.display = "none";
+  rollLabel.hidden = false;
+  rollLabel.textContent = label;
+  diceField.replaceChildren(...chips);
+  totalRow.hidden = !showTotal;
+  if (showTotal) {
+    totalNum.textContent = total;
+    totalRow.querySelector(".total-word").textContent = totalWord;
+    verdictEl.textContent = verdict ? verdict.text : "";
+    verdictEl.className = "verdict " + (verdict ? verdict.cls : "");
+  }
+  rollAgainBtn.hidden = false;
+}
+
+function chipsFromDetail(detail) {
+  const chips = [];
+  for (const d of detail) {
+    if (d.kind === "mod") {
+      const m = document.createElement("span");
+      m.className = "mod-chip";
+      m.textContent = (d.value >= 0 ? "+" : "−") + Math.abs(d.value);
+      chips.push(m);
+    } else {
+      for (const r of d.rolls) chips.push(dieChip(r));
+    }
+  }
+  return chips;
+}
+
+/* ============================== History ============================== */
+const HISTORY_KEY = "diceTrayHistory";
+let history = [];
+try { history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch (e) { history = []; }
+let lastRoll = null; // {type, payload} for roll-again
+
+function pushHistory(entry) {
+  entry.time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  history.unshift(entry);
+  if (history.length > 60) history.length = 60;
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch (e) {}
+  renderHistory();
+}
+
+function renderHistory() {
+  const ul = $("historyList");
+  ul.replaceChildren(...history.map((h, i) => {
+    const li = document.createElement("li");
+    const t = document.createElement("span"); t.className = "h-time"; t.textContent = h.time;
+    const d = document.createElement("span"); d.className = "h-desc";
+    d.innerHTML = `<span class="h-notation">${h.notation}</span> — ${h.breakdown}`;
+    const tot = document.createElement("span");
+    tot.className = "h-total " + (h.cls || "");
+    tot.textContent = h.total;
+    li.append(t, d, tot);
+    if (h.redo) {
+      const rb = document.createElement("button");
+      rb.className = "h-reroll"; rb.title = "Roll this again"; rb.textContent = "↻";
+      rb.addEventListener("click", () => rerollHistory(i));
+      li.append(rb);
+    }
+    return li;
+  }));
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function rerollHistory(i) {
+  const h = history[i];
+  if (!h || !h.redo) return;
+  runAction(h.redo);
+}
+$("clearHistory").addEventListener("click", () => { history = []; try { localStorage.removeItem(HISTORY_KEY); } catch (e) {} renderHistory(); });
+
+/* Dispatch table so history "reroll" and Roll Again share one path */
+function runAction(action) {
+  const [type, arg] = action;
+  if (type === "notation") doNotationRoll(arg);
+  else if (type === "dnd") doDnd(arg);
+  else if (type === "stats") doStats();
+  else if (type === "fate") doFate(arg);
+  else if (type === "savage") doSavage(arg);
+  else if (type === "wod") doWod(arg);
+  else if (type === "shadowrun") doShadowrun(arg);
+  else if (type === "coc") doCoc(arg);
+}
+rollAgainBtn.addEventListener("click", () => { if (lastRoll) runAction(lastRoll); });
+
+/* ============================== Quick dice pool ============================== */
+const QUICK = [4, 6, 8, 10, 12, 20, 100, "F"];
+const pool = {}; // sides -> count
+let poolMod = 0;
+
+const grid = $("diceGrid");
+for (const s of QUICK) {
+  const b = document.createElement("button");
+  b.className = "die-btn";
+  b.title = s === "F" ? "Fate die" : "d" + s;
+  b.setAttribute("aria-label", "Add " + (s === "F" ? "Fate die" : "d" + s));
+  const sh = document.createElement("span");
+  sh.className = "shape " + shapeClass(s);
+  sh.textContent = s === "F" ? "dF" : s === 100 ? "d%" : "d" + s;
+  const c = document.createElement("span"); c.className = "count";
+  b.append(sh, c);
+  b.addEventListener("click", () => { pool[s] = (pool[s] || 0) + 1; refreshPool(); });
+  b.addEventListener("contextmenu", e => {
+    e.preventDefault();
+    if (pool[s]) { pool[s]--; if (!pool[s]) delete pool[s]; refreshPool(); }
+  });
+  b._count = c;
+  grid.append(b);
+}
+function refreshPool() {
+  let i = 0;
+  for (const s of QUICK) {
+    const btn = grid.children[i++];
+    const n = pool[s] || 0;
+    btn._count.textContent = n;
+    btn._count.classList.toggle("on", n > 0);
+  }
+  $("modVal").textContent = (poolMod >= 0 ? "+" : "−") + Math.abs(poolMod);
+}
+$("modPlus").addEventListener("click", () => { poolMod++; refreshPool(); });
+$("modMinus").addEventListener("click", () => { poolMod--; refreshPool(); });
+$("clearPool").addEventListener("click", () => { for (const k in pool) delete pool[k]; poolMod = 0; refreshPool(); });
+
+$("rollPool").addEventListener("click", () => {
+  const parts = [];
+  for (const s of QUICK) if (pool[s]) parts.push(pool[s] + "d" + (s === "F" ? "F" : s === 100 ? "%" : s));
+  if (!parts.length) return flashError("Pick up at least one die first");
+  let expr = parts.join("+");
+  if (poolMod) expr += (poolMod > 0 ? "+" : "-") + Math.abs(poolMod);
+  doNotationRoll(expr);
+});
+
+/* ============================== Notation roll ============================== */
+const errEl = $("parseError");
+function flashError(msg) {
+  errEl.textContent = msg;
+  errEl.style.display = "block";
+  clearTimeout(flashError._t);
+  flashError._t = setTimeout(() => { errEl.style.display = "none"; }, 4000);
+}
+
+function doNotationRoll(expr) {
+  let terms;
+  try { terms = parseNotation(expr); }
+  catch (e) { flashError(e.message); return; }
+  errEl.style.display = "none";
+  const { total, detail } = evaluate(terms);
+  showTray({ label: expr, chips: chipsFromDetail(detail), total });
+  lastRoll = ["notation", expr];
+  const breakdown = detail.map(d =>
+    d.kind === "mod" ? (d.value >= 0 ? "+" : "") + d.value
+      : "[" + d.rolls.map(r => r.kept ? r.value : "~" + r.value + "~").join(", ") + "]"
+  ).join(" ");
+  pushHistory({ notation: esc(expr), breakdown: esc(breakdown), total, redo: ["notation", expr] });
+}
+$("rollNotation").addEventListener("click", () => doNotationRoll($("notation").value));
+$("notation").addEventListener("keydown", e => { if (e.key === "Enter") doNotationRoll($("notation").value); });
+document.querySelectorAll(".hint code").forEach(c =>
+  c.addEventListener("click", () => { $("notation").value = c.textContent; doNotationRoll(c.textContent); }));
+
+/* ============================== System tabs ============================== */
+const SYSTEMS = [
+  ["dnd", "D&D 5e"], ["fate", "Fate"], ["savage", "Savage Worlds"],
+  ["wod", "World of Darkness"], ["shadowrun", "Shadowrun"], ["coc", "Call of Cthulhu"]
+];
+const tabsEl = $("sysTabs");
+for (const [key, name] of SYSTEMS) {
+  const b = document.createElement("button");
+  b.className = "tab" + (key === "dnd" ? " active" : "");
+  b.textContent = name; b.dataset.sys = key;
+  b.setAttribute("role", "tab");
+  b.addEventListener("click", () => {
+    tabsEl.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t === b));
+    document.querySelectorAll(".sys-body").forEach(p => p.classList.toggle("active", p.dataset.sys === key));
+  });
+  tabsEl.append(b);
+}
+document.querySelector('.sys-body[data-sys="dnd"]').classList.add("active");
+
+function segValue(segEl, attr) {
+  return segEl.querySelector("button.active").dataset[attr];
+}
+for (const segId of ["advSeg", "cocSeg"]) {
+  $(segId).querySelectorAll("button").forEach(b =>
+    b.addEventListener("click", () => {
+      $(segId).querySelectorAll("button").forEach(x => x.classList.toggle("active", x === b));
+    }));
+}
+
+/* ---------- D&D 5e ---------- */
+function doDnd(cfg) {
+  const { adv, mod, dc } = cfg;
+  const n = adv === "norm" ? 1 : 2;
+  const rolls = Array.from({ length: n }, () => rand(20));
+  let pick;
+  if (adv === "adv") pick = Math.max(...rolls);
+  else if (adv === "dis") pick = Math.min(...rolls);
+  else pick = rolls[0];
+  const total = pick + mod;
+  const chips = rolls.map(v => dieChip({ value: v, kept: v === pick || (rolls[0] === rolls[1] && v === pick), sides: 20 }));
+  // when both dice equal, keep only one visually
+  if (n === 2 && rolls[0] === rolls[1]) chips[1].classList.add("dropped");
+  else if (n === 2) chips[rolls.indexOf(pick) === 0 ? 1 : 0].classList.add("dropped");
+  if (mod) { const m = document.createElement("span"); m.className = "mod-chip"; m.textContent = (mod > 0 ? "+" : "−") + Math.abs(mod); chips.push(m); }
+
+  let verdict = null, cls = "";
+  if (pick === 20) { verdict = { text: "NATURAL 20!", cls: "good" }; cls = "good"; }
+  else if (pick === 1) { verdict = { text: "Natural 1…", cls: "bad" }; cls = "bad"; }
+  if (dc != null && !verdict) {
+    verdict = total >= dc ? { text: `Success vs DC ${dc}`, cls: "good" } : { text: `Fail vs DC ${dc}`, cls: "bad" };
+    cls = total >= dc ? "good" : "bad";
+  } else if (dc != null && verdict) {
+    verdict.text += pick === 20 ? " — auto success" : ` — vs DC ${dc}: ${total >= dc ? "success" : "fail"}`;
+  }
+  const advWord = adv === "adv" ? " (advantage)" : adv === "dis" ? " (disadvantage)" : "";
+  showTray({ label: `D&D 5e — d20${mod ? (mod > 0 ? "+" : "") + mod : ""}${advWord}`, chips, total, verdict });
+  lastRoll = ["dnd", cfg];
+  pushHistory({
+    notation: `d20${advWord}`, total, cls,
+    breakdown: esc(`[${rolls.join(", ")}]${mod ? (mod > 0 ? " +" : " −") + Math.abs(mod) : ""}${verdict ? " · " + verdict.text : ""}`),
+    redo: ["dnd", cfg]
+  });
+}
+$("dndRoll").addEventListener("click", () => {
+  const dcRaw = $("dndDC").value.trim();
+  doDnd({
+    adv: segValue($("advSeg"), "adv"),
+    mod: parseInt($("dndMod").value, 10) || 0,
+    dc: dcRaw === "" ? null : parseInt(dcRaw, 10)
+  });
+});
+
+function doStats() {
+  const stats = [];
+  const chipRows = [];
+  for (let i = 0; i < 6; i++) {
+    const rolls = rollTerm({ count: 4, sides: 6, explode: false, reroll: 0, keep: { mode: "dl", n: 1 } });
+    stats.push(rolls.reduce((a, r) => a + (r.kept ? r.value : 0), 0));
+    chipRows.push(rolls);
+  }
+  const chips = [];
+  chipRows.forEach((rolls, i) => {
+    rolls.forEach((r, j) => {
+      const c = dieChip(r, { noColor: true, tag: j === 0 ? "stat " + (i + 1) : "" });
+      chips.push(c);
+    });
+  });
+  const sum = stats.reduce((a, b) => a + b, 0);
+  showTray({
+    label: "D&D 5e — ability scores, 4d6 drop lowest × 6",
+    chips, total: stats.join(" · "), totalWord: "Scores",
+    verdict: { text: `sum ${sum}`, cls: "plain" }
+  });
+  lastRoll = ["stats"];
+  pushHistory({ notation: "stats 4d6dl1×6", breakdown: esc(stats.join(", ") + ` (sum ${sum})`), total: Math.max(...stats), redo: ["stats"] });
+}
+$("dndStats").addEventListener("click", doStats);
+
+/* ---------- Fate ---------- */
+const FATE_LADDER = { 8: "Legendary", 7: "Epic", 6: "Fantastic", 5: "Superb", 4: "Great", 3: "Good", 2: "Fair", 1: "Average", 0: "Mediocre", "-1": "Poor", "-2": "Terrible" };
+function doFate(cfg) {
+  const { mod } = cfg;
+  const rolls = Array.from({ length: 4 }, () => ({ value: randF(), kept: true, sides: "F" }));
+  const sum = rolls.reduce((a, r) => a + r.value, 0);
+  const total = sum + mod;
+  const chips = rolls.map(r => dieChip(r));
+  if (mod) { const m = document.createElement("span"); m.className = "mod-chip"; m.textContent = (mod > 0 ? "+" : "−") + Math.abs(mod); chips.push(m); }
+  const ladder = FATE_LADDER[Math.max(-2, Math.min(8, total))] || (total > 8 ? "Beyond Legendary" : "Abysmal");
+  showTray({ label: `Fate — 4dF${mod ? (mod > 0 ? "+" : "") + mod : ""}`, chips, total: (total >= 0 ? "+" : "") + total, verdict: { text: ladder, cls: total >= 3 ? "good" : total < 0 ? "bad" : "plain" } });
+  lastRoll = ["fate", cfg];
+  pushHistory({ notation: "4dF" + (mod ? (mod > 0 ? "+" : "") + mod : ""), breakdown: esc(rolls.map(r => r.value > 0 ? "+" : r.value < 0 ? "−" : "·").join(" ") + " · " + ladder), total: (total >= 0 ? "+" : "") + total, redo: ["fate", cfg] });
+}
+$("fateRoll").addEventListener("click", () => doFate({ mod: parseInt($("fateMod").value, 10) || 0 }));
+
+/* ---------- Savage Worlds ---------- */
+function explodeRoll(sides) {
+  const seq = [];
+  let v = rand(sides), guard = 0;
+  seq.push(v);
+  while (v === sides && guard++ < EXPLODE_CAP) { v = rand(sides); seq.push(v); }
+  return seq;
+}
+function doSavage(cfg) {
+  const { trait, mod, wild } = cfg;
+  const traitSeq = explodeRoll(trait);
+  const traitSum = traitSeq.reduce((a, b) => a + b, 0);
+  let wildSeq = null, wildSum = -Infinity;
+  if (wild) { wildSeq = explodeRoll(6); wildSum = wildSeq.reduce((a, b) => a + b, 0); }
+  const best = Math.max(traitSum, wildSum === -Infinity ? traitSum : wildSum);
+  const total = best + mod;
+  const critFail = wild && traitSeq[0] === 1 && wildSeq[0] === 1;
+
+  const chips = [];
+  traitSeq.forEach((v, i) => {
+    const c = dieChip({ value: v, kept: traitSum >= wildSum, sides: trait, note: i > 0 ? "explode" : "" }, { tag: i === 0 ? "trait d" + trait : "ace!" });
+    chips.push(c);
+  });
+  if (wildSeq) wildSeq.forEach((v, i) => {
+    const c = dieChip({ value: v, kept: wildSum > traitSum, sides: 6, note: i > 0 ? "explode" : "" }, { tag: i === 0 ? "wild d6" : "ace!" });
+    chips.push(c);
+  });
+  if (mod) { const m = document.createElement("span"); m.className = "mod-chip"; m.textContent = (mod > 0 ? "+" : "−") + Math.abs(mod); chips.push(m); }
+
+  let verdict;
+  if (critFail) verdict = { text: "CRITICAL FAILURE (snake eyes)", cls: "bad" };
+  else if (total >= 4) {
+    const raises = Math.floor((total - 4) / 4);
+    verdict = { text: raises > 0 ? `Success with ${raises} raise${raises > 1 ? "s" : ""}!` : "Success!", cls: "good" };
+  } else verdict = { text: "Failure vs TN 4", cls: "bad" };
+
+  showTray({ label: `Savage Worlds — d${trait}${wild ? " + wild d6" : ""}${mod ? (mod > 0 ? "+" : "") + mod : ""}, take best`, chips, total, verdict });
+  lastRoll = ["savage", cfg];
+  pushHistory({
+    notation: `SW d${trait}${wild ? "+wild" : ""}`, total, cls: verdict.cls === "good" ? "good" : "bad",
+    breakdown: esc(`trait [${traitSeq.join("→")}]${wildSeq ? ` wild [${wildSeq.join("→")}]` : ""} · ${verdict.text}`),
+    redo: ["savage", cfg]
+  });
+}
+$("swRoll").addEventListener("click", () => doSavage({
+  trait: parseInt($("swTrait").value, 10),
+  mod: parseInt($("swMod").value, 10) || 0,
+  wild: $("swWild").checked
+}));
+
+/* ---------- World / Chronicles of Darkness ---------- */
+function doWod(cfg) {
+  const { poolN, again } = cfg;
+  const chips = [];
+  let successes = 0;
+  const seq = [];
+  let queue = poolN, guard = 0;
+  while (queue-- > 0 && guard++ < 500) {
+    const v = rand(10);
+    seq.push(v);
+    const isAgain = again > 0 && v >= again;
+    if (v >= 8) successes++;
+    if (isAgain) queue++;
+    chips.push(dieChip({ value: v, kept: v >= 8, sides: 10 }, { noColor: true, tag: isAgain ? "again!" : "" }));
+    if (v >= 8) chips[chips.length - 1].classList.add("max");
+  }
+  const verdict = successes >= 5 ? { text: `Exceptional success — ${successes} successes!`, cls: "good" }
+    : successes > 0 ? { text: `${successes} success${successes > 1 ? "es" : ""}`, cls: "good" }
+    : { text: "No successes", cls: "bad" };
+  showTray({ label: `Chronicles of Darkness — ${poolN}d10, 8+ hits, ${again > 0 ? again + "-again" : "no again"}`, chips, total: successes, totalWord: "Successes", verdict });
+  lastRoll = ["wod", cfg];
+  pushHistory({
+    notation: `CofD ${poolN}d10`, total: successes, cls: successes ? "good" : "bad",
+    breakdown: esc(`[${seq.join(", ")}] · ${verdict.text}`), redo: ["wod", cfg]
+  });
+}
+$("wodRoll").addEventListener("click", () => doWod({
+  poolN: Math.max(1, Math.min(30, parseInt($("wodPool").value, 10) || 1)),
+  again: parseInt($("wodAgain").value, 10)
+}));
+
+/* ---------- Shadowrun ---------- */
+function doShadowrun(cfg) {
+  const { poolN, edge } = cfg;
+  const chips = [];
+  const seq = [];
+  let hits = 0, ones = 0, baseDice = 0;
+  let queue = poolN, guard = 0;
+  while (queue-- > 0 && guard++ < 500) {
+    const v = rand(6);
+    seq.push(v);
+    const exploding = edge && v === 6;
+    if (v >= 5) hits++;
+    if (guard <= poolN) { baseDice++; if (v === 1) ones++; }
+    if (exploding) queue++;
+    const c = dieChip({ value: v, kept: v >= 5, sides: 6 }, { noColor: true, tag: exploding ? "explode!" : "" });
+    if (v >= 5) c.classList.add("max");
+    if (v === 1) c.classList.add("min1");
+    chips.push(c);
+  }
+  const glitch = ones * 2 > poolN;
+  let verdict;
+  if (glitch && hits === 0) verdict = { text: "CRITICAL GLITCH!", cls: "bad" };
+  else if (glitch) verdict = { text: `${hits} hit${hits !== 1 ? "s" : ""} — but a glitch!`, cls: "bad" };
+  else verdict = { text: `${hits} hit${hits !== 1 ? "s" : ""}`, cls: hits ? "good" : "bad" };
+  showTray({ label: `Shadowrun — ${poolN}d6, hits on 5+${edge ? ", edge (6s explode)" : ""}`, chips, total: hits, totalWord: "Hits", verdict });
+  lastRoll = ["shadowrun", cfg];
+  pushHistory({
+    notation: `SR ${poolN}d6${edge ? " edge" : ""}`, total: hits, cls: verdict.cls,
+    breakdown: esc(`[${seq.join(", ")}] · ${verdict.text}`), redo: ["shadowrun", cfg]
+  });
+}
+$("srRoll").addEventListener("click", () => doShadowrun({
+  poolN: Math.max(1, Math.min(40, parseInt($("srPool").value, 10) || 1)),
+  edge: $("srEdge").checked
+}));
+
+/* ---------- Call of Cthulhu ---------- */
+function doCoc(cfg) {
+  const { skill, bp } = cfg;
+  const units = Math.floor(Math.random() * 10);           // 0-9
+  const tensCount = 1 + Math.abs(bp);
+  const tensRolls = Array.from({ length: tensCount }, () => Math.floor(Math.random() * 10)); // 0-9 → 00-90
+  const valueOf = t => { const v = t * 10 + units; return v === 0 ? 100 : v; };
+  const values = tensRolls.map(valueOf);
+  let final;
+  if (bp > 0) final = Math.min(...values);
+  else if (bp < 0) final = Math.max(...values);
+  else final = values[0];
+
+  const chips = [];
+  tensRolls.forEach((t, i) => {
+    const kept = valueOf(t) === final && values.indexOf(final) === i;
+    chips.push(dieChip({ value: t * 10, kept: values.indexOf(final) === i, sides: 100 }, { noColor: true, tag: "tens" }));
+  });
+  chips.push(dieChip({ value: units, kept: true, sides: 10 }, { noColor: true, tag: "units" }));
+
+  let verdict, cls;
+  const fumbleAt = skill < 50 ? 96 : 100;
+  if (final === 1) { verdict = { text: "CRITICAL SUCCESS!", cls: "good" }; cls = "good"; }
+  else if (final >= fumbleAt) { verdict = { text: "FUMBLE!", cls: "bad" }; cls = "bad"; }
+  else if (final <= Math.floor(skill / 5)) { verdict = { text: `Extreme success (≤${Math.floor(skill / 5)})`, cls: "good" }; cls = "good"; }
+  else if (final <= Math.floor(skill / 2)) { verdict = { text: `Hard success (≤${Math.floor(skill / 2)})`, cls: "good" }; cls = "good"; }
+  else if (final <= skill) { verdict = { text: `Regular success (≤${skill})`, cls: "good" }; cls = "good"; }
+  else { verdict = { text: `Failure (over ${skill})`, cls: "bad" }; cls = "bad"; }
+
+  const bpWord = bp > 0 ? " with bonus die" : bp < 0 ? " with penalty die" : "";
+  showTray({ label: `Call of Cthulhu — d100 vs skill ${skill}${bpWord}`, chips, total: final, totalWord: "Rolled", verdict });
+  lastRoll = ["coc", cfg];
+  pushHistory({
+    notation: `CoC d100 vs ${skill}${bpWord}`, total: final, cls,
+    breakdown: esc(`tens [${tensRolls.map(t => (t * 10).toString().padStart(2, "0")).join(", ")}] units ${units} · ${verdict.text}`),
+    redo: ["coc", cfg]
+  });
+}
+$("cocRoll").addEventListener("click", () => doCoc({
+  skill: Math.max(1, Math.min(99, parseInt($("cocSkill").value, 10) || 50)),
+  bp: parseInt(segValue($("cocSeg"), "bp"), 10)
+}));
+
+renderHistory();
+refreshPool();
+</script>
+</body>
+</html>
