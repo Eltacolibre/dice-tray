@@ -33,6 +33,6 @@ There is no server. Your rolls never leave the page.
 
 Dice Tray is free and stays free. If it earned a spot on your table:
 
-- ☕ [Buy me a coffee](https://ko-fi.com/bagquestrpg)
+- ☕ [Buy me a coffee](https://ko-fi.com/bagquest)
 - 📕 [GM toolkits and adventures on itch.io](https://bagquest.itch.io)
 - 🗺️ [MapForge, a free battle map maker](https://eltacolibre.github.io/mapforge/)
