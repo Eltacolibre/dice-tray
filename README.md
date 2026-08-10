@@ -22,12 +22,19 @@ Supports keep highest/lowest (`kh`/`kl`), drop (`dh`/`dl`), exploding (`!`), rer
 | World of Darkness | dice pools, successes, tens again, botches |
 | Shadowrun | hits, glitches and critical glitches |
 | Call of Cthulhu | d100 vs skill, bonus/penalty dice, hard and extreme success tiers |
+| HakneyZaq | skill tiers, Tally dice, keep-highest down to tier, The One Table descriptors |
 
 **Ledger** — a running history of every roll with its full breakdown, and one click to roll it again.
 
 ## Privacy
 
 There is no server. Your rolls never leave the page.
+
+## Credits
+
+[HakneyZaq (Version Zero)](https://docs.google.com/document/d/1z6clwojy_UY2e4aPsOoYaOm5ZH5MFQA5qRAXJ-uTnxk/edit)
+is included with the designer's permission and is licensed CC BY-NC-SA 4.0.
+Only the mechanics and the outcome descriptors are reproduced here; the rules text is not.
 
 ## Support
 

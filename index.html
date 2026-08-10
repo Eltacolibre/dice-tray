@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dice Tray — Free RPG Dice Roller for D&D, Fate, Savage Worlds & More</title>
-<meta name="description" content="Free online dice roller with real system rules built in: D&D 5e advantage, Fate ladder, Savage Worlds exploding dice, World of Darkness pools, Shadowrun glitches and Call of Cthulhu bonus dice. Type any notation like 4d6kh3+2. No sign-up.">
+<meta name="description" content="Free online dice roller with real system rules built in: D&D 5e advantage, Fate ladder, Savage Worlds exploding dice, World of Darkness pools, Shadowrun glitches, Call of Cthulhu bonus dice and HakneyZaq skill tiers. Type any notation like 4d6kh3+2. No sign-up.">
 <link rel="canonical" href="https://eltacolibre.github.io/dice-tray/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Dice Tray — Free RPG Dice Roller with Real System Rules">
@@ -522,6 +522,24 @@
         <div class="sys-row"><button class="btn" id="cocRoll">Roll d100</button></div>
         <p class="sys-note">Call of Cthulhu 7e: roll under skill. Extreme = fifth, Hard = half. Bonus/penalty dice swap the tens die. 96–100 fumbles at low skill.</p>
       </div>
+
+      <div class="sys-body" data-sys="hakneyzaq">
+        <div class="sys-row">
+          <label>Skill Tier</label>
+          <select id="hzTier">
+            <option value="0">&lt;0&gt; Unfamiliar</option>
+            <option value="1">&lt;1&gt; Familiar</option>
+            <option value="2" selected>&lt;2&gt; Skilled</option>
+            <option value="3">&lt;3&gt; Proficient</option>
+            <option value="4">&lt;4&gt; Superior</option>
+            <option value="5">&lt;5&gt; Supreme</option>
+          </select>
+          <label>Tallies spent</label><input type="number" id="hzTallies" value="0" min="0" max="5" step="1">
+        </div>
+        <div class="sys-row"><button class="btn" id="hzRoll">Roll d6</button></div>
+        <p class="sys-note">Your Tier is how many dice you sum. Each Tally spent adds a die (five max), then the lowest are dropped back down to your Tier. At Supreme you already roll five, so a Tally rerolls your lowest instead. The total is read off The One Table.</p>
+        <p class="sys-note"><a href="https://docs.google.com/document/d/1z6clwojy_UY2e4aPsOoYaOm5ZH5MFQA5qRAXJ-uTnxk/edit" target="_blank" rel="noopener">HakneyZaq (Version Zero)</a> is used here with the designer's permission, and is licensed CC BY-NC-SA 4.0.</p>
+      </div>
     </section>
   </div>
 
@@ -775,6 +793,7 @@ function runAction(action) {
   else if (type === "wod") doWod(arg);
   else if (type === "shadowrun") doShadowrun(arg);
   else if (type === "coc") doCoc(arg);
+  else if (type === "hakneyzaq") doHakneyZaq(arg);
 }
 rollAgainBtn.addEventListener("click", () => { if (lastRoll) runAction(lastRoll); });
 
@@ -856,7 +875,8 @@ document.querySelectorAll(".hint code").forEach(c =>
 /* ============================== System tabs ============================== */
 const SYSTEMS = [
   ["dnd", "D&D 5e"], ["fate", "Fate"], ["savage", "Savage Worlds"],
-  ["wod", "World of Darkness"], ["shadowrun", "Shadowrun"], ["coc", "Call of Cthulhu"]
+  ["wod", "World of Darkness"], ["shadowrun", "Shadowrun"], ["coc", "Call of Cthulhu"],
+  ["hakneyzaq", "HakneyZaq"]
 ];
 const tabsEl = $("sysTabs");
 for (const [key, name] of SYSTEMS) {
@@ -1125,6 +1145,73 @@ function doCoc(cfg) {
 $("cocRoll").addEventListener("click", () => doCoc({
   skill: Math.max(1, Math.min(99, parseInt($("cocSkill").value, 10) || 50)),
   bp: parseInt(segValue($("cocSeg"), "bp"), 10)
+}));
+
+/* ---------- HakneyZaq ---------- */
+const HZ_TIERS = ["Unfamiliar", "Familiar", "Skilled", "Proficient", "Superior", "Supreme"];
+/* The One Table — inclusive value ranges, lowest first. */
+const HZ_TABLE = [
+  [1, 2, "Weak"], [3, 5, "Ordinary"], [6, 9, "Solid"], [10, 12, "Formidable"],
+  [13, 16, "Extraordinary"], [17, 22, "Preternatural"], [23, 28, "Transcendent"], [29, 30, "Boundless"]
+];
+function hzDescriptor(total) {
+  for (const [lo, hi, name] of HZ_TABLE) if (total >= lo && total <= hi) return name;
+  return total < 1 ? "Weak" : "Boundless";
+}
+function doHakneyZaq(cfg) {
+  const tier = Math.max(0, Math.min(5, cfg.tier));
+  const tierName = `<${tier}> ${HZ_TIERS[tier]}`;
+
+  if (tier === 0) {
+    showTray({
+      label: "HakneyZaq — " + tierName, chips: [], total: "—",
+      verdict: { text: "Unfamiliar — no dice to sum", cls: "plain" }
+    });
+    lastRoll = ["hakneyzaq", cfg];
+    pushHistory({ notation: "HakneyZaq " + tierName, breakdown: esc("no dice"), total: "—", redo: ["hakneyzaq", cfg] });
+    return;
+  }
+
+  // Each Tally buys an extra die up to five; at Supreme one Tally rerolls the lowest instead.
+  const supreme = tier === 5;
+  const tallies = Math.max(0, Math.min(supreme ? 1 : 5 - tier, cfg.tallies));
+  const pool = supreme ? 5 : tier + tallies;
+
+  let rolls = Array.from({ length: pool }, () => ({ value: rand(6), kept: true, sides: 6, note: "" }));
+  let rerolled = null;
+
+  if (supreme && tallies) {
+    let lowIdx = 0;
+    rolls.forEach((r, i) => { if (r.value < rolls[lowIdx].value) lowIdx = i; });
+    rerolled = { value: rolls[lowIdx].value };
+    rolls[lowIdx] = { value: rand(6), kept: true, sides: 6, note: "reroll" };
+  } else if (tallies) {
+    // Drop the lowest dice until the count matches the Tier.
+    const order = rolls.map((r, i) => i).sort((a, b) => rolls[a].value - rolls[b].value);
+    order.slice(0, pool - tier).forEach(i => { rolls[i].kept = false; });
+  }
+
+  const total = rolls.reduce((a, r) => a + (r.kept ? r.value : 0), 0);
+  const descriptor = hzDescriptor(total);
+
+  const chips = rolls.map(r => dieChip(r, r.note === "reroll" ? { tag: "reroll of " + rerolled.value } : undefined));
+  const notation = supreme ? "5d6" : (pool === tier ? pool + "d6" : pool + "d6kh" + tier);
+
+  showTray({
+    label: `HakneyZaq — ${tierName}${tallies ? ` · ${tallies} ${tallies > 1 ? "Tallies" : "Tally"} spent` : ""}`,
+    chips, total,
+    verdict: { text: descriptor, cls: total >= 13 ? "good" : total <= 2 ? "bad" : "plain" }
+  });
+  lastRoll = ["hakneyzaq", cfg];
+  pushHistory({
+    notation: notation,
+    breakdown: esc(rolls.map(r => r.kept ? r.value : "(" + r.value + ")").join(" ") + " · " + descriptor),
+    total, redo: ["hakneyzaq", cfg]
+  });
+}
+$("hzRoll").addEventListener("click", () => doHakneyZaq({
+  tier: parseInt($("hzTier").value, 10) || 0,
+  tallies: parseInt($("hzTallies").value, 10) || 0
 }));
 
 renderHistory();
