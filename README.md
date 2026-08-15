@@ -43,3 +43,10 @@ Dice Tray is free and stays free. If it earned a spot on your table:
 - ☕ [Buy me a coffee](https://ko-fi.com/bagquest)
 - 📕 [GM toolkits and adventures on itch.io](https://bagquest.itch.io)
 - 🗺️ [MapForge, a free battle map maker](https://eltacolibre.github.io/mapforge/)
+
+## License
+
+The source code is released under the [MIT License](LICENSE).
+
+The bundled HakneyZaq content is **not** MIT — it is CC BY-NC-SA 4.0. See
+[NOTICE.md](NOTICE.md) before reusing any part of this project.
