@@ -1,7 +1,7 @@
 # Dice Tray
 
 A free online RPG dice roller that actually knows the rules of the systems it rolls for.
-Runs entirely in your browser — no account, no ads, no tracking.
+Runs entirely in your browser — no account, no ads, no cookies.
 
 **Roll here: https://eltacolibre.github.io/dice-tray/**
 
@@ -28,7 +28,14 @@ Supports keep highest/lowest (`kh`/`kl`), drop (`dh`/`dl`), exploding (`!`), rer
 
 ## Privacy
 
-There is no server. Your rolls never leave the page.
+Your rolls never leave the page. The dice, the modifiers, and the whole ledger are
+computed and kept in your browser and are never transmitted anywhere.
+
+One thing is sent: an anonymous page-view count, so I can tell whether this tool is
+worth continuing to maintain. It is configured cookieless — no cookies, no local
+storage, no session recording, no click tracking, and no user profile is created.
+It records that a page was opened, and nothing else. Block it with any content
+blocker and Dice Tray works exactly the same.
 
 ## Credits
 
